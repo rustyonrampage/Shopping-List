@@ -1,19 +1,27 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+
+import { createAppContainer } from "react-navigation";
+import { createStackNavigator } from "react-navigation-stack";
+
+// redux stuff
+import { Provider } from "react-redux";
+import { ConfigureStore } from "./redux/configureStore";
+const store = ConfigureStore();
+import ShoppingList from "./screens/shopping_list.js";
+
+const stackNavigator = createStackNavigator({
+  ShoppingList: {
+    screen: ShoppingList
+  }
+});
+
+const AppNavigator = createAppContainer(stackNavigator);
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-    </View>
+    <Provider store={store}>
+      <AppNavigator />
+    </Provider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
