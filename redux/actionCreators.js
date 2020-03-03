@@ -13,3 +13,9 @@ export const toggleProductChecked = productId => {
     payload: productId
   };
 };
+
+export const removeCheckedProducts = () => {
+  return {
+    type: ActionTypes.REMOVE_CHECKED_PRODUCTS
+  };
+};

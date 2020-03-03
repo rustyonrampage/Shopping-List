@@ -42,13 +42,15 @@ export const products = (state = { products: DATA }, action) => {
       let updatedData = state.products.map(data => {
         if (data.id == action.payload) {
           // data.isChecked = !data.isChecked;
-
           return { ...data, isChecked: !data.isChecked };
         }
         return data;
       });
       // console.log("Y kia?", updatedData);
       return { products: updatedData };
+    case ActionTypes.REMOVE_CHECKED_PRODUCTS:
+      let filterd_data = state.products.filter(data => data.isChecked == false);
+      return { products: filterd_data };
     default:
       // console.log("DEFAULT HY");
       return state;

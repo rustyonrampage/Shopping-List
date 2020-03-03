@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Dimensions
+  Dimensions,
+  Modal
 } from "react-native";
 
 import DraggableFlatList from "react-native-draggable-flatlist";
@@ -15,13 +16,33 @@ import { CheckBox, Button } from "react-native-elements";
 import { FontAwesome } from "@expo/vector-icons";
 
 import { connect } from "react-redux";
-import { setProducts, toggleProductChecked } from "../redux/actionCreators";
+import {
+  setProducts,
+  toggleProductChecked,
+  removeCheckedProducts
+} from "../redux/actionCreators";
 
 class ShoppingList extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      showAddModal: false
+    };
     this.isChecked = false;
   }
+
+  showDeleteAlert = () => {
+    Alert.alert(
+      "Delete Products",
+      "Are you sure you want to delete?",
+      [
+        { text: "Delete", onPress: () => this.props.removeCheckedProducts() },
+        { text: "Cancel", onPress: () => console.log("Cancelled Del Product.") }
+      ],
+      { cancelable: true }
+    );
+  };
+
   renderItem = ({ item, index, drag, isActive }) => {
     // first check if any product is marked for delete or not
     return (
@@ -75,7 +96,7 @@ class ShoppingList extends Component {
                 Styles.footerDelButton,
                 { backgroundColor: deleteButtonShow ? "#E74C3C" : "#CD6155" }
               ]}
-              onPress={() => console.log("Pressed del button")}
+              onPress={() => this.showDeleteAlert()}
             >
               <FontAwesome color="#fff" size={40} name="remove"></FontAwesome>
             </TouchableOpacity>
@@ -86,6 +107,9 @@ class ShoppingList extends Component {
               <FontAwesome color="#fff" size={40} name="plus"></FontAwesome>
             </TouchableOpacity>
           </View>
+          <Modal>
+            <View style={Styles.addProductModal}></View>
+          </Modal>
         </View>
       );
     } else return <View></View>;
@@ -98,7 +122,8 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => {
   return {
     setProducts: products => dispatch(setProducts(products)),
-    toggleCheckbox: id => dispatch(toggleProductChecked(id))
+    toggleCheckbox: id => dispatch(toggleProductChecked(id)),
+    removeCheckedProducts: () => dispatch(removeCheckedProducts())
   };
 };
 
@@ -155,5 +180,10 @@ const Styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#5499C7"
+  },
+  addProductModal: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center"
   }
 });
