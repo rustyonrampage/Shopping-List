@@ -10,23 +10,113 @@ import {
   Dimensions,
   Modal
 } from "react-native";
+import ValidationComponent from "react-native-form-validator";
 
 import DraggableFlatList from "react-native-draggable-flatlist";
-import { CheckBox, Button } from "react-native-elements";
+import ColorPalette from "react-native-color-palette";
+import { CheckBox, Input } from "react-native-elements";
 import { FontAwesome } from "@expo/vector-icons";
 
 import { connect } from "react-redux";
 import {
   setProducts,
   toggleProductChecked,
-  removeCheckedProducts
+  removeCheckedProducts,
+  addProduct
 } from "../redux/actionCreators";
+
+class ProductModal extends ValidationComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      name: "",
+      qty: "",
+      color: "#F4D03F",
+      description: ""
+    };
+  }
+  submit() {
+    let validateSuccess = this.validate({
+      name: { required: true },
+      qty: { required: true }
+    });
+    if (validateSuccess) {
+      console.log("Bhejo bc");
+      this.props.addProduct({
+        ...this.state
+      });
+      this.props.closeModal();
+    }
+  }
+  render() {
+    return (
+      <Modal animationType="slide" visible={this.props.showModal}>
+        <View style={Styles.addProductModal}>
+          <Input
+            placeholder="Name"
+            value={this.state.name}
+            errorStyle={{ color: "red" }}
+            inputContainerStyle={
+              this.isFieldInError("name") ? { borderColor: "red" } : null
+            }
+            errorMessage={this.isFieldInError("name") ? "Required" : null}
+            onChangeText={text => this.setState({ name: text })}
+          />
+          <Input
+            placeholder="Quantity"
+            value={this.state.qty}
+            errorStyle={{ color: "red" }}
+            inputContainerStyle={
+              this.isFieldInError("qty") ? { borderColor: "red" } : null
+            }
+            errorMessage={this.isFieldInError("name") ? "Required" : null}
+            onChangeText={text => this.setState({ qty: text })}
+          />
+          <ColorPalette
+            onChange={color => this.setState({ color: color })}
+            value={this.state.color}
+            colors={["#F4D03F", "#2ECC71", "#F44336", "#03A9F4", "#9C27B0"]}
+            title={"Select color:"}
+            icon={
+              <FontAwesome name={"check-circle-o"} size={25} color={"black"} />
+              // Icon can just be text or ASCII
+            }
+          />
+          <Input
+            placeholder="(Optional) Notes"
+            value={this.state.description}
+            onChangeText={text => this.setState({ description: text })}
+          />
+
+          <View style={Styles.addProductsButtonContainer}>
+            <TouchableOpacity onPress={() => this.props.closeModal()}>
+              <View style={Styles.productModalCancelBtn}>
+                <Text style={Styles.btnText}>Cancel</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                this.submit();
+              }}
+            >
+              <View style={Styles.productModalAddBtn}>
+                <Text style={Styles.btnText}>Add</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+}
 
 class ShoppingList extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showAddModal: false
+      showAddModal: false,
+      showDetailsModal: false,
+      selectedProduct: null
     };
     this.isChecked = false;
   }
@@ -36,13 +126,19 @@ class ShoppingList extends Component {
       "Delete Products",
       "Are you sure you want to delete?",
       [
-        { text: "Delete", onPress: () => this.props.removeCheckedProducts() },
-        { text: "Cancel", onPress: () => console.log("Cancelled Del Product.") }
+        {
+          text: "Cancel",
+          onPress: () => console.log("Cancelled Del Product.")
+        },
+        { text: "Delete", onPress: () => this.props.removeCheckedProducts() }
       ],
       { cancelable: true }
     );
   };
 
+  closeProductModal = () => {
+    this.setState({ showAddModal: false });
+  };
   renderItem = ({ item, index, drag, isActive }) => {
     // first check if any product is marked for delete or not
     return (
@@ -51,6 +147,9 @@ class ShoppingList extends Component {
           backgroundColor: isActive ? "#E5E7E9" : "#fff",
           height: 50
         }}
+        onPress={id =>
+          this.setState({ showDetailsModal: true, selectedProduct: item.id })
+        }
         onLongPress={drag}
         delayLongPress={200}
       >
@@ -74,6 +173,50 @@ class ShoppingList extends Component {
       </TouchableOpacity>
     );
   };
+
+  renderDetailProduct = () => {
+    let selectedItem = null;
+    console.log("Locha ", this.props);
+    this.props.products.forEach((product, index) => {
+      if (product.id === this.state.selectedProduct) selectedItem = product;
+    });
+    return (
+      <Modal visible={this.state.showDetailsModal} animationType="slide">
+        <View style={Styles.detailModalView}>
+          <Text
+            style={{
+              fontWeight: "bold",
+              fontSize: 18,
+              borderBottomWidth: 1,
+              borderBottomColor: selectedItem.color
+            }}
+          >
+            Product Details
+          </Text>
+          <Text>Name: {selectedItem.name}</Text>
+          <Text>Qty: {selectedItem.qty}</Text>
+          <Text>{selectedItem.description}</Text>
+          <TouchableOpacity
+            style={{
+              width: 120,
+              backgroundColor: "#F44336",
+              justifyContent: "center",
+              alignItems: "center",
+              paddingTop: 10,
+              paddingBottom: 10,
+              marginTop: 20,
+              marginLeft: "auto",
+              marginRight: "auto"
+            }}
+            onPress={() => this.setState({ showDetailsModal: false })}
+          >
+            <Text style={{ color: "#fff" }}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    );
+  };
+
   render() {
     if (this.props.products) {
       let deleteButtonShow = this.props.products.some(item => item.isChecked);
@@ -102,14 +245,18 @@ class ShoppingList extends Component {
             </TouchableOpacity>
             <TouchableOpacity
               style={Styles.footerAddButton}
-              onPress={() => console.log("Pressed add button")}
+              onPress={() => this.setState({ showAddModal: true })}
             >
               <FontAwesome color="#fff" size={40} name="plus"></FontAwesome>
             </TouchableOpacity>
           </View>
-          <Modal>
-            <View style={Styles.addProductModal}></View>
-          </Modal>
+          {/* Modal for add product */}
+          <ProductModal
+            addProduct={this.props.addProduct}
+            closeModal={this.closeProductModal}
+            showModal={this.state.showAddModal}
+          />
+          {this.state.showDetailsModal && this.renderDetailProduct()}
         </View>
       );
     } else return <View></View>;
@@ -123,7 +270,8 @@ const mapDispatchToProps = dispatch => {
   return {
     setProducts: products => dispatch(setProducts(products)),
     toggleCheckbox: id => dispatch(toggleProductChecked(id)),
-    removeCheckedProducts: () => dispatch(removeCheckedProducts())
+    removeCheckedProducts: () => dispatch(removeCheckedProducts()),
+    addProduct: product => dispatch(addProduct(product))
   };
 };
 
@@ -184,6 +332,44 @@ const Styles = StyleSheet.create({
   addProductModal: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
+    paddingLeft: 20,
+    paddingRight: 20
+  },
+  productModalCancelBtn: {
+    width: 100,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F44336",
+    borderRadius: 3
+  },
+  productModalAddBtn: {
+    width: 100,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#2ECC71"
+  },
+  addProductsButtonContainer: {
+    display: "flex",
+    flexDirection: "row",
+    width: "100%",
+    justifyContent: "space-between",
+    paddingLeft: 10,
+    paddingRight: 10,
+    marginTop: 20,
+    borderRadius: 3
+  },
+  btnText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 18
+  },
+  detailModalView: {
+    flex: 1,
+    justifyContent: "center",
+    paddingLeft: 30,
+    paddingRight: 30
   }
 });

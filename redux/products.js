@@ -49,8 +49,25 @@ export const products = (state = { products: DATA }, action) => {
       // console.log("Y kia?", updatedData);
       return { products: updatedData };
     case ActionTypes.REMOVE_CHECKED_PRODUCTS:
+      // console.log("FISHY ", state);
       let filterd_data = state.products.filter(data => data.isChecked == false);
       return { products: filterd_data };
+    case ActionTypes.ADD_PRODUCT:
+      let product = action.payload;
+      // ok so we need to genereate a fucking id
+      let maxId = Math.max.apply(
+        Math,
+        state.products.map(function(o) {
+          return o.id;
+        })
+      );
+      let newId = maxId + 1;
+      let newData = state.products.concat({
+        ...product,
+        id: newId,
+        isChecked: false
+      });
+      return { products: newData };
     default:
       // console.log("DEFAULT HY");
       return state;

@@ -7,8 +7,12 @@ import { createStackNavigator } from "react-navigation-stack";
 // redux stuff
 import { Provider } from "react-redux";
 import { ConfigureStore } from "./redux/configureStore";
-const store = ConfigureStore();
+import { PersistGate } from "redux-persist/es/integration/react";
+
+const { persistor, store } = ConfigureStore();
+
 import ShoppingList from "./screens/shopping_list.js";
+import { Loading } from "./components/LoadingComponent";
 
 const stackNavigator = createStackNavigator({
   ShoppingList: {
@@ -21,7 +25,9 @@ const AppNavigator = createAppContainer(stackNavigator);
 export default function App() {
   return (
     <Provider store={store}>
-      <AppNavigator />
+      <PersistGate loading={<Loading />} persistor={persistor}>
+        <AppNavigator />
+      </PersistGate>
     </Provider>
   );
 }

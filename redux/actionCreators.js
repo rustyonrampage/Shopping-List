@@ -19,3 +19,10 @@ export const removeCheckedProducts = () => {
     type: ActionTypes.REMOVE_CHECKED_PRODUCTS
   };
 };
+
+export const addProduct = product => {
+  return {
+    type: ActionTypes.ADD_PRODUCT,
+    payload: product
+  };
+};
